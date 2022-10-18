@@ -2,10 +2,11 @@ import struct
 import sys
 import time
 from functools import wraps
+import random
 from threading import Thread
 import pandas as pd
 import os
-
+import inspect
 
 def setlog(func):
     """ what's this
@@ -27,7 +28,7 @@ def setlog(func):
     return run
 
 # @setlog
-def animation(func_name, *args, **kwargs):
+def animation(func_name, iterator, *args, **kwargs):
     """ what's this
 
     Args:
@@ -38,17 +39,22 @@ def animation(func_name, *args, **kwargs):
     """
     try:
         ani_str = '|/-\\'
-        while (1) :
-            for i in range ( len ( ani_str ) ) :
-                print ( f'\r {func_name}正在运行： {ani_str[ i ]}', end='' )
-                time.sleep ( 0.25 )
+        i = iterator % 4
+        print ( f'\r {func_name}正在运行： {ani_str[ i ]}', end='' )
+        time.sleep ( 0.25 )
     except Exception as e:
         print( f' animation cause Error : {e}')
 
 
 class CreatePics():
 
-    def __init__(self, columns_list=None, trade_days_limit=1000, root_path='c:\\zd_swhy\\vipdoc',):
+    def __init__(self, columns_list=None,
+                 trade_days_limit=1000,
+                 root_path='c:\\zd_swhy\\vipdoc',
+                 pics_lmt=3,
+                 draw_days=50,
+                 save_path='c:\\Users\\binli\\JupyterNotebook\\',
+                 ):
         if columns_list==None:
             self.columns_list = [ 'Open', 'High', 'Low', 'Close', 'Volume' ]
         else:
@@ -56,7 +62,33 @@ class CreatePics():
 
         self.trade_days_limit = trade_days_limit
         self.root_path = root_path
+        self.pics_lmt = pics_lmt
+        self.draw_days = draw_days
+        self.idx_low = self.columns_list.index ( 'Low' )
+        self.idx_high = self.columns_list.index ( 'High' )
+        self.idx_close = self.columns_list.index ( 'Close' )
+        self.save_path = save_path
 
+    def makeFolder(self, path, folder, *args, **kwargs):
+        """ what's this
+        
+        Args:
+            arg:
+        Raises:
+            error:
+            
+        """
+        try:
+            folderWithPath = path + '\\' + folder
+            if os.path.exists(path=folderWithPath):
+                pass
+            else:
+                os.mkdir(path=folderWithPath )
+
+        except Exception as e:
+            print( f' makeFolder cause Error : {e}')
+    
+    
     def readBinaryAsDataFrame(self, file, *args, **kwargs)->pd.DataFrame:
         """ what's this
             每次从本都读取文件的方式都是一样的，对于不同的数据需求，可以在输出的dataFrame中切片
@@ -118,7 +150,64 @@ class CreatePics():
         except Exception as e:
             print( f'getStocksFileWithPathAsList cause Error : {e}')
 
+    def saveTrainingPics(self, *args, **kwargs):
+        """ what's this
+        
+        Args:
+            arg:
+        Raises:
+            error:
+            
+        """
+        try:
+            cnt = 0
+            for file_name_with_path in self.getStocksFileWithPathAsList () :
+                if self.pics_lmt :
+                    # file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
+                    dfx = self.readBinaryAsDataFrame ( file_name_with_path )
+                    self.classification ( df=dfx )
 
+                    # 转圈显示程序正在运行
+                    animation(inspect.stack()[0][3], cnt)
+
+                    self.pics_lmt -= 1
+                    cnt += 1
+                else :
+                    break
+        except Exception as e:
+            print( f' saveTrainingPics cause Error : {e}')
+    
+    def saveTestingPics(self, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            for file_name_with_path in self.getStocksFileWithPathAsList () :
+                file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
+                df = self.readBinaryAsDataFrame ( file_name_with_path )
+
+                rows = df.shape[ 0 ]
+                if rows > self.draw_days :
+                    rdm = int ( random.uniform ( self.draw_days, rows - self.draw_days ) )
+
+                    portfolio = self.save_path + '\\' + 'random\\'
+                    maxPrice_pre = df.iloc[ rdm : rdm + 10, self.idx_high ].max ()
+                    close_price = df.iloc[ rdm, self.idx_close ]
+                    if maxPrice_pre - close_price > 0 :
+                        sign = '+'
+                    else :
+                        sign = '-'
+                    percent = round ( (maxPrice_pre - close_price) / close_price * 100, 1 )
+                    pic_name = file_name + '_' + sign + str ( percent )
+                    self.draw_pics ( df=df.iloc[ rdm - self.draw_days :rdm ], pic_name=pic_name,
+                                     save_portfolio_abs=portfolio )
+        except Exception as e:
+            print( f' saveTestingPics cause Error : {e}')
 
 
 if __name__ == '__main__':
