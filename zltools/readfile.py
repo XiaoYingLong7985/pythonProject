@@ -1,18 +1,21 @@
+import os
+import random
 import struct
 import sys
 import time
+from datetime import datetime
 from functools import wraps
-import random
 from threading import Thread
+
+import mplfinance as mpf  # 金融画图库
 import pandas as pd
-import os
-import inspect
+
 
 def setlog(func):
     """ what's this
 
     Args:
-        arg:
+
     Raises:
         error:
 
@@ -22,13 +25,13 @@ def setlog(func):
     @wraps(func)
     def run(*args) :
         with open(log_file, 'a+') as f:
-            f.write(f'{func.__name__}, {log_file}')
+            f.write(f'{func.__name__} run at: {datetime.fromtimestamp(time.time())}')
             pass
         return func
     return run
 
 # @setlog
-def animation(func_name, iterator, *args, **kwargs):
+def animation(*args, **kwargs):
     """ what's this
 
     Args:
@@ -39,21 +42,25 @@ def animation(func_name, iterator, *args, **kwargs):
     """
     try:
         ani_str = '|/-\\'
-        i = iterator % 4
-        print ( f'\r {func_name}正在运行： {ani_str[ i ]}', end='' )
-        time.sleep ( 0.25 )
+        iterator = 0
+        while(1):
+            i = iterator % 4
+            print ( f'\r  程序正在运行： {ani_str[ i ]}', end='' )
+            iterator += 1
+            time.sleep ( 0.25 )
     except Exception as e:
         print( f' animation cause Error : {e}')
 
 
 class CreatePics():
-
+    classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
     def __init__(self, columns_list=None,
                  trade_days_limit=1000,
                  root_path='c:\\zd_swhy\\vipdoc',
                  pics_lmt=3,
                  draw_days=50,
                  save_path='c:\\Users\\binli\\JupyterNotebook\\',
+                 w=2.7,h=2.7
                  ):
         if columns_list==None:
             self.columns_list = [ 'Open', 'High', 'Low', 'Close', 'Volume' ]
@@ -68,6 +75,10 @@ class CreatePics():
         self.idx_high = self.columns_list.index ( 'High' )
         self.idx_close = self.columns_list.index ( 'Close' )
         self.save_path = save_path
+        self.timeStamp = self.__class__.__name__ + '_' + datetime.today().strftime('%Y%m%d')
+        self.createFolders()
+        self.w = w
+        self.h = h
 
     def makeFolder(self, path, folder, *args, **kwargs):
         """ what's this
@@ -87,6 +98,30 @@ class CreatePics():
 
         except Exception as e:
             print( f' makeFolder cause Error : {e}')
+
+    @setlog
+    def createFolders(self, *args, **kwargs):
+        """ what's this
+        
+        Args:
+            arg:
+        Raises:
+            error:
+            
+        """
+        try:
+            self.makeFolder(self.save_path, self.timeStamp)
+            path = self.save_path + '\\' + self.timeStamp
+            self.makeFolder(path, 'train')
+            self.makeFolder(path, 'random')
+            self.makeFolder(path, 'newest')
+
+            trainPath = path + '\\' + 'train'
+            for cls in self.classes_list:
+                self.makeFolder(trainPath, cls)
+
+        except Exception as e:
+            print( f' createFolders cause Error : {e}')
     
     
     def readBinaryAsDataFrame(self, file, *args, **kwargs)->pd.DataFrame:
@@ -150,6 +185,7 @@ class CreatePics():
         except Exception as e:
             print( f'getStocksFileWithPathAsList cause Error : {e}')
 
+    @setlog
     def saveTrainingPics(self, *args, **kwargs):
         """ what's this
         
@@ -160,7 +196,7 @@ class CreatePics():
             
         """
         try:
-            cnt = 0
+            # cnt = 0
             for file_name_with_path in self.getStocksFileWithPathAsList () :
                 if self.pics_lmt :
                     # file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
@@ -168,15 +204,17 @@ class CreatePics():
                     self.classification ( df=dfx )
 
                     # 转圈显示程序正在运行
-                    animation(inspect.stack()[0][3], cnt)
+                    # animation(inspect.stack()[0][3])
+                    # cnt += 1
 
                     self.pics_lmt -= 1
-                    cnt += 1
+
                 else :
                     break
         except Exception as e:
             print( f' saveTrainingPics cause Error : {e}')
-    
+
+    @setlog
     def saveTestingPics(self, *args, **kwargs):
         """ what's this
 
@@ -187,9 +225,14 @@ class CreatePics():
 
         """
         try:
+            # cnt = 0
             for file_name_with_path in self.getStocksFileWithPathAsList () :
                 file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
                 df = self.readBinaryAsDataFrame ( file_name_with_path )
+
+                # # 转圈显示程序正在运行
+                # animation ( inspect.stack ()[ 0 ][ 3 ], cnt )
+                # cnt += 1
 
                 rows = df.shape[ 0 ]
                 if rows > self.draw_days :
@@ -209,13 +252,80 @@ class CreatePics():
         except Exception as e:
             print( f' saveTestingPics cause Error : {e}')
 
+    def draw_pics(self, df, pic_name, save_portfolio_abs, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            # print ( 'draw_pics ... \r', end='\r' )
+            df.index = pd.DatetimeIndex ( df[ 'Date' ] )  # 用Data列的Datatime格式数据作为索引
+            # save_path = "C:\\Users\\binli\\JupyterNotebook\\" + self.folder + "\\"
+            mpf.plot ( df,
+                       type='candle',
+                       figsize=(self.w, self.h),
+                       volume=True,
+                       mav=(5, 10, 20),
+                       figscale=1.0,  # 放大倍数
+                       # xrotation=15,
+                       # datetime_format='%Y-%m-%d',
+                       tight_layout=True,
+                       style=mpf.make_mpf_style ( base_mpf_style='nightclouds',
+                                                  gridstyle='',
+                                                  rc={'font.size' : '0'},
+                                                  marketcolors=mpf.make_marketcolors ( up='white',  # white
+                                                                                       down='red',
+                                                                                       # edge='white',
+                                                                                       wick='i',
+                                                                                       volume={'up' : 'white',
+                                                                                               'down' : 'cyan'}
+                                                                                       )
+                                                  ),
+                       ylabel=' ',
+                       ylabel_lower=' ',
+                       show_nontrading=False,
+                       volume_alpha=0.5,
+                       volume_panel=0,
+
+                       axisoff=True,
+                       #              savefig=''.join(["C:\\Users\\binli\\JupyterNotebook\\pic\\",'f_',f[:8],'_',draws,'.jpg'])
+
+                       savefig=''.join ( [ save_portfolio_abs, pic_name, '.jpg' ] )
+
+                       )
+        except Exception as e:
+            print( f' draw_pics cause Error : {e}')
+
+    def classification(self, df, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            pass
+        except Exception as e:
+            print( f' classification cause Error : {e}')
+
 
 if __name__ == '__main__':
 
-
-    ani = Thread(target=animation,args='sys')
-    # time.sleep ( 5 )
+    # 通过arg='string'的形式传递字符串，只能显示第一个字符，应将arg=('string',)转化成tuple类型
+    ani = Thread(target=animation)
+    # 通过setDaemon(true)来设置线程为“守护线程”
+    ani.setDaemon(True)
     ani.start()
-    ani.join(timeout=5)
+    ani.join ( timeout=0.2 )
+
+    cps = CreatePics()
 
     sys.exit()
+
+
