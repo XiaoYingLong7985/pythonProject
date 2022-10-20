@@ -60,7 +60,11 @@ class CreatePics():
                  pics_lmt=3,
                  draw_days=50,
                  save_path='c:\\Users\\binli\\JupyterNotebook\\',
-                 w=2.7,h=2.7
+                 w=2.7,h=2.7,
+                 bac_ratio=1.06,
+                 ris_ratio=1.30,
+                 climb_ratio=1.15,
+                 pics_limit=3
                  ):
         if columns_list==None:
             self.columns_list = [ 'Open', 'High', 'Low', 'Close', 'Volume' ]
@@ -79,6 +83,11 @@ class CreatePics():
         self.createFolders()
         self.w = w
         self.h = h
+        self.bck_ratio = bac_ratio
+        self.ris_ratio = ris_ratio
+        self.climb_ratio = climb_ratio
+        self.pics_limit = pics_limit
+
 
     def makeFolder(self, path, folder, *args, **kwargs):
         """ what's this
@@ -300,7 +309,7 @@ class CreatePics():
         except Exception as e:
             print( f' draw_pics cause Error : {e}')
 
-    def classification(self, df, *args, **kwargs):
+    def classification(self, file_name, df, *args, **kwargs):
         """ what's this
 
         Args:
@@ -310,10 +319,146 @@ class CreatePics():
 
         """
         try:
-            pass
+            rows = df.shape[ 0 ]
+            if rows >= 2 :
+                maxPrice_high = df.iloc[ -2, self.idx_high ]
+                maxPrice_high_id = -2
+                minPrice_high = df.iloc[ -1, self.idx_high ]
+                minPrice_high_id = -1
+
+                maxPrice_low = df.iloc[ -1, self.idx_low ]
+                maxPrice_low_id = -1
+                minPrice_low = df.iloc[ -2, self.idx_low ]
+                minPrice_low_id = -2
+
+                i, pics_r, pics_u, pics_c, pics_d, pics_s = 3, 0, 0, 0, 0, 0  # , 0, pics_ud
+                cnt_r = 0  # 避免以1day的间隔连续保存多张图片, cnt_d, 0
+
+                while i < (rows - 1) :
+                    # temp = df.iloc[ -i ]
+                    temp_high = df.iloc[ -i, self.idx_high ]  # 向左取出一个临近交易日的最高价
+                    temp_low = df.iloc[ -i, self.idx_low ]  # 向左取出一个临近交易日的最低价
+
+                    if temp_low > maxPrice_low :  # 如果临时价高于当前最高价，则刷新最高价，最低价默认为刷新后的最高价左侧临近交易日的最低价，更新最高、最低价格和他们的ID
+                        maxPrice_low = temp_low
+                        maxPrice_low_id = -i
+                        minPrice_low_id = -(i + 1)
+                        minPrice_low = df.iloc[ minPrice_low_id, self.idx_low ]
+                    elif temp_low < minPrice_low :  # 如果临时价低于当前最低价，则刷新最低价及其ID
+                        minPrice_low = temp_low
+                        minPrice_low_id = -i
+                    else :  # 如果临时价介于最低价和最高价之间时
+                        if ((minPrice_low_id + 2) < 0) and (-1 * (minPrice_low_id - 48) <= df.shape[ 0 ]) :  # 满足df切片条件
+                            dfs = df.iloc[ minPrice_low_id - 48 :minPrice_low_id + 2 ]
+
+                            l_dfs_max = dfs.iloc[ :, self.idx_low ].max ()
+                            l_dfs_min = dfs.iloc[ :, self.idx_low ].min ()
+                            l_delta = l_dfs_max - l_dfs_min
+
+                            if temp_low > ((2 - self.bck_ratio) * maxPrice_low) \
+                                    and cnt_r >= 0 and pics_u < self.pics_limit \
+                                    and (maxPrice_low_id - minPrice_low_id ) > 25 :  # 如果临时价高于最高价的94%
+                                # self.append_uncertain ( df=dfs )  # drawing_pic_uncertain_rise
+                                self.savePicsByClassification ( self.classes_list[ 4 ], pics_u, file_name, dfs )
+
+                                pics_u += 1
+                                cnt_r = -1 * self.draw_days
+
+                            elif temp_low < (self.bck_ratio * minPrice_low) :  # 如果临时价低于最低价的106%
+                                pass
+                            else :  # 临时价介于[1.06 * min, 0.94 * max]
+                                if (maxPrice_low > self.ris_ratio * minPrice_low) \
+                                        and (temp_low < (l_dfs_min + 0.33 * l_delta)) \
+                                        and (pics_r < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
+
+                                    # self.append_rise ( df=dfs )  # drawing_pic_rise
+                                    self.savePicsByClassification ( self.classes_list[ 0 ], pics_r, file_name, dfs )
+                                    pics_r += 1
+
+                                elif (maxPrice_low > self.climb_ratio * minPrice_low) \
+                                        and (temp_low < l_dfs_min + 0.5 * l_delta) \
+                                        and (pics_c < self.pics_limit) :  # 如果最高价已经超过最低价15%，就跳出循环体并返回他们的ID
+                                    # self.append_climb ( df=dfs )  # drawing_pic_climb
+                                    self.savePicsByClassification ( self.classes_list[ 1 ], pics_c, file_name, dfs )
+                                    # classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
+                                    pics_c += 1
+
+                                # else :# 否则，说明中间价格回升超过6%，为避免最大、最小价格之间有很多起伏，放弃之前确定的最高价，继续向左搜索
+                                maxPrice_low = temp_low
+                                maxPrice_low_id = -i
+                                minPrice_low_id = -(i + 1)
+                                minPrice_low = df.iloc[ minPrice_low_id, self.idx_low ]
+                            cnt_r += 1
+                        else :
+                            pass
+
+                    if temp_high > maxPrice_high :  # 如果临时价高于当前最高价，则刷新最高价
+                        maxPrice_high = temp_high
+                        maxPrice_high_id = -i
+                    elif temp_high < minPrice_high :  # 如果临时价低于当前最低价，则刷新最低价及其ID# ，最高价默认为刷新后的最低价左侧临近交易日的价格，更新最高、最低价格和他们的ID
+                        minPrice_high = temp_high
+                        minPrice_high_id = -i
+                        maxPrice_high_id = -(i + 1)
+                        maxPrice_high = df.iloc[ maxPrice_high_id, self.idx_high ]
+                    else :  # 如果临时价介于最低价和最高价之间时
+                        if ((maxPrice_high_id + 2) < 0) and (-1 * (maxPrice_high_id - 48) <= df.shape[ 0 ]) :  # 满足df切片条件
+                            dfs = df.iloc[ maxPrice_high_id - 48 :maxPrice_high_id + 2 ]
+
+                            h_dfs_max = dfs.iloc[ :, self.idx_high ].max ()
+                            h_dfs_min = dfs.iloc[ :, self.idx_high ].min ()
+
+                            h_delta = h_dfs_max - h_dfs_min
+
+                            # if temp_high < (self.bck_ratio * minPrice_low) and cnt_d >= 0 and pics_ud < self.pics_limit: #如果临时价低于最低价的106%
+                            #     self.savePic_uncertain_drop ( save_path=save_path, file_name=file_name, pics=pics_ud,
+                            #                                   df=dfs )  # drawing_pic_uncertain_drop
+                            #     pics_ud += 1
+                            #     cnt_d = -50 #避免以1day的间隔连续保存多张图片
+                            if temp_high > ((2 - self.bck_ratio) * maxPrice_high) or temp_high < (self.bck_ratio * minPrice_high) :  # 如果临时价高于最高价的94%
+                                pass
+                            else :  # 临时价介于[1.06 * min, 0.94 * max]
+                                if (maxPrice_high > self.ris_ratio * minPrice_high) \
+                                        and (temp_high > h_dfs_min + 0.66 * h_delta) \
+                                        and (pics_d < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
+                                    # self.append_drop ( df=dfs )  # drawing_pic_drop
+                                    self.savePicsByClassification ( self.classes_list[ 2 ], pics_d, file_name, dfs )
+                                    pics_d += 1
+
+                                elif (maxPrice_high > self.climb_ratio * minPrice_high) \
+                                        and (temp_high > h_dfs_min + 0.5 * h_delta) \
+                                        and (pics_s < self.pics_limit) :  # 如果最高价已经超过最低价15%，就跳出循环体并返回他们的ID
+                                    # self.append_slide ( df=dfs )  # drawing_pic_slide
+                                    self.savePicsByClassification(self.classes_list[ 3 ], pics_s, file_name, dfs)
+                                    #classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
+                                    pics_s += 1
+
+                                # else :# 否则，说明中间价格回落超过6%，为避免最大、最下价格之间存在很多波动，放弃之前确定的最高价，继续向左搜索
+                                minPrice_high = temp_high
+                                minPrice_high_id = -i
+                                maxPrice_high_id = -(i + 1)
+                                maxPrice_high = df.iloc[ maxPrice_high_id, self.idx_high ]
+                            # cnt_d += 1
+                        else :
+                            pass
+                    i += 1
         except Exception as e:
             print( f' classification cause Error : {e}')
 
+    def savePicsByClassification(self, classes, picsX, file_name, df, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            pic_name = file_name + '_' + str ( picsX )
+            portfolio = self.save_path + '\\train\\' + classes + '\\'
+            self.draw_pics ( df=df, pic_name=pic_name, save_portfolio_abs=portfolio )
+        except Exception as e:
+            print( f' savePicsByClassification cause Error : {e}')
 
 if __name__ == '__main__':
 
