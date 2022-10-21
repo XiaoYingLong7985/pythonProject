@@ -11,7 +11,7 @@ import mplfinance as mpf  # 金融画图库
 import pandas as pd
 
 
-def setlog(func):
+def setlog(func) :
     """ what's this
 
     Args:
@@ -20,18 +20,21 @@ def setlog(func):
         error:
 
     """
-    #将funcs的元信息复制给run函数
+    # 将funcs的元信息复制给run函数
     log_file = 'C:\PycharmProjects\pythonProject\logs\setlog.log'
-    @wraps(func)
-    def run(*args) :
-        with open(log_file, 'a+') as f:
-            f.write(f'{func.__name__} run at: {datetime.fromtimestamp(time.time())}')
-            pass
-        return func
+
+    @wraps ( func )
+    def run(*args, **kwargs) :
+        with open ( log_file, 'a+' ) as f :
+            f.write ( f'{func.__name__} run at: {datetime.fromtimestamp ( time.time () )} \r' )
+
+        return func(*args, **kwargs)
+
     return run
 
+
 # @setlog
-def animation(*args, **kwargs):
+def animation(*args, **kwargs) :
     """ what's this
 
     Args:
@@ -40,47 +43,47 @@ def animation(*args, **kwargs):
         error:
 
     """
-    try:
+    try :
         ani_str = '|/-\\'
         iterator = 0
-        while(1):
+        while (1) :
             i = iterator % 4
             print ( f'\r  程序正在运行： {ani_str[ i ]}', end='' )
             iterator += 1
             time.sleep ( 0.25 )
-    except Exception as e:
-        print( f' animation cause Error : {e}')
+    except Exception as e :
+        print ( f' animation cause Error : {e}' )
 
 
-class CreatePics():
-    classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
+class CreatePics () :
+    classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain', 'riseX', 'dropX' ]
+
     def __init__(self, columns_list=None,
                  trade_days_limit=1000,
-                 root_path='c:\\zd_swhy\\vipdoc',
-                 pics_lmt=3,
+                 root_path='C:\\zd_swhy\\vipdoc',
+                 stocks_need=30,
                  draw_days=50,
-                 save_path='c:\\Users\\binli\\JupyterNotebook\\',
-                 w=2.7,h=2.7,
+                 save_path='C:\\Users\\binli\\JupyterNotebook\\',
+                 w=2.7, h=2.7,
                  bac_ratio=1.06,
                  ris_ratio=1.30,
                  climb_ratio=1.15,
                  pics_limit=3
-                 ):
-        if columns_list==None:
-            self.columns_list = [ 'Open', 'High', 'Low', 'Close', 'Volume' ]
-        else:
+                 ) :
+        if columns_list == None :
+            self.columns_list = [ 'Date', 'Open', 'High', 'Low', 'Close', 'Volume' ]
+        else :
             self.columns_list = columns_list
 
         self.trade_days_limit = trade_days_limit
         self.root_path = root_path
-        self.pics_lmt = pics_lmt
+        self.stocks_need = stocks_need
         self.draw_days = draw_days
         self.idx_low = self.columns_list.index ( 'Low' )
         self.idx_high = self.columns_list.index ( 'High' )
         self.idx_close = self.columns_list.index ( 'Close' )
         self.save_path = save_path
-        self.timeStamp = self.__class__.__name__ + '_' + datetime.today().strftime('%Y%m%d')
-        self.createFolders()
+        self.timeStamp = self.__class__.__name__ + '_' + datetime.today ().strftime ( '%Y%m%d' )
         self.w = w
         self.h = h
         self.bck_ratio = bac_ratio
@@ -88,8 +91,9 @@ class CreatePics():
         self.climb_ratio = climb_ratio
         self.pics_limit = pics_limit
 
+        self.createFolders ()
 
-    def makeFolder(self, path, folder, *args, **kwargs):
+    def makeFolder(self, path, folder, *args, **kwargs) :
         """ what's this
         
         Args:
@@ -98,18 +102,18 @@ class CreatePics():
             error:
             
         """
-        try:
+        try :
             folderWithPath = path + '\\' + folder
-            if os.path.exists(path=folderWithPath):
+            if os.path.exists ( path=folderWithPath ) :
                 pass
-            else:
-                os.mkdir(path=folderWithPath )
+            else :
+                os.mkdir ( path=folderWithPath )
 
-        except Exception as e:
-            print( f' makeFolder cause Error : {e}')
+        except Exception as e :
+            print ( f' makeFolder cause Error : {e}' )
 
     @setlog
-    def createFolders(self, *args, **kwargs):
+    def createFolders(self, *args, **kwargs) :
         """ what's this
         
         Args:
@@ -118,22 +122,21 @@ class CreatePics():
             error:
             
         """
-        try:
-            self.makeFolder(self.save_path, self.timeStamp)
+        try :
+            self.makeFolder ( self.save_path, self.timeStamp )
             path = self.save_path + '\\' + self.timeStamp
-            self.makeFolder(path, 'train')
-            self.makeFolder(path, 'random')
-            self.makeFolder(path, 'newest')
+            self.makeFolder ( path, 'train' )
+            self.makeFolder ( path, 'random' )
+            self.makeFolder ( path, 'newest' )
 
             trainPath = path + '\\' + 'train'
-            for cls in self.classes_list:
-                self.makeFolder(trainPath, cls)
+            for cls in self.classes_list :
+                self.makeFolder ( trainPath, cls )
 
-        except Exception as e:
-            print( f' createFolders cause Error : {e}')
-    
-    
-    def readBinaryAsDataFrame(self, file, *args, **kwargs)->pd.DataFrame:
+        except Exception as e :
+            print ( f' createFolders cause Error : {e}' )
+
+    def readBinaryAsDataFrame(self, file, *args, **kwargs) -> pd.DataFrame :
         """ what's this
             每次从本都读取文件的方式都是一样的，对于不同的数据需求，可以在输出的dataFrame中切片
             这样做的好处是，不需要每读一条记录都取判断一下是否相应的列被选中，提高读取效率
@@ -143,37 +146,38 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             lst = [ ]
             rec = 0
             with open ( file, 'rb' ) as o :  # 'rb'代表以二进制形式的字节类型读入
                 while (1) :
                     content = o.read ( 32 )
                     lens = content.__len__ ()
-                    if lens >= 32 and rec <= self.trade_days_limit:
+                    if lens >= 32 and rec <= self.trade_days_limit :
                         dic = {}
                         b_tup = struct.unpack_from ( '<IIIIIIII', content, 0 )  # fmt- <代表小端，I代表无符号int类型
-                        dic[ 'date' ] = '-'.join ([ str ( b_tup[ 0 ] )[ :4 ], str ( b_tup[ 0 ] )[ 4 :6 ], str ( b_tup[ 0 ] )[ 6 : ] ] )
+                        dic[ 'date' ] = '-'.join (
+                            [ str ( b_tup[ 0 ] )[ :4 ], str ( b_tup[ 0 ] )[ 4 :6 ], str ( b_tup[ 0 ] )[ 6 : ] ] )
                         dic[ 'open' ] = round ( b_tup[ 1 ] / 100, 2 )
                         dic[ 'pmax' ] = round ( b_tup[ 2 ] / 100, 2 )
                         dic[ 'pmin' ] = round ( b_tup[ 3 ] / 100, 2 )
                         dic[ 'clos' ] = round ( b_tup[ 4 ] / 100, 2 )
                         dic[ 'tnov' ] = round ( float ( b_tup[ 6 ] ) / 1000000, 2 )
 
-                        tup = (dic[ 'open' ], dic[ 'pmax' ], dic[ 'pmin' ], dic[ 'clos' ], dic['tnov' ])
+                        tup = (dic[ 'date' ], dic[ 'open' ], dic[ 'pmax' ], dic[ 'pmin' ], dic[ 'clos' ], dic[ 'tnov' ])
                         lst.append ( tup )
                         rec += 1
 
                     else :
                         break
             o.close ()
-            #默认最多读取1000条记录
-            return pd.DataFrame(lst, self.columns_list)
+            # 默认最多读取1000条记录
+            return pd.DataFrame ( data=lst, columns=self.columns_list )
 
-        except Exception as e:
-            print( f'readBinaryAsDataFrame cause Error : {e}')
+        except Exception as e :
+            print ( f'readBinaryAsDataFrame cause Error : {e}' )
 
-    def getStocksFileWithPathAsList(self, *args, **kwargs)->list:
+    def getStocksFileWithPathAsList(self, *args, **kwargs) -> list :
         """ what's this
 
         Args:
@@ -182,7 +186,7 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             lst = [ ]
             for root, dirs, files in os.walk ( self.root_path ) :
                 if files :
@@ -191,11 +195,29 @@ class CreatePics():
                             lst.append ( root + '\\' + file )
             return lst
 
-        except Exception as e:
-            print( f'getStocksFileWithPathAsList cause Error : {e}')
+        except Exception as e :
+            print ( f'getStocksFileWithPathAsList cause Error : {e}' )
 
     @setlog
-    def saveTrainingPics(self, *args, **kwargs):
+    def saveNewestPics(self, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            pass
+            #1、最近2天交易量突然增大，同时此前的约10天内快速下跌，趋势很陡峭
+            #2、
+        except Exception as e:
+            print( f' saveNewestPics cause Error : {e}')
+
+
+    @setlog
+    def saveTrainingPics(self, *args, **kwargs) :
         """ what's this
         
         Args:
@@ -204,27 +226,27 @@ class CreatePics():
             error:
             
         """
-        try:
+        try :
             # cnt = 0
             for file_name_with_path in self.getStocksFileWithPathAsList () :
-                if self.pics_lmt :
-                    # file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
+                if self.stocks_need :
+                    file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
                     dfx = self.readBinaryAsDataFrame ( file_name_with_path )
-                    self.classification ( df=dfx )
+                    self.classification (file_name=file_name, df=dfx )
 
                     # 转圈显示程序正在运行
                     # animation(inspect.stack()[0][3])
                     # cnt += 1
 
-                    self.pics_lmt -= 1
+                    self.stocks_need -= 1
 
                 else :
                     break
-        except Exception as e:
-            print( f' saveTrainingPics cause Error : {e}')
+        except Exception as e :
+            print ( f' saveTrainingPics cause Error : {e}' )
 
     @setlog
-    def saveTestingPics(self, *args, **kwargs):
+    def saveTestingPics(self, *args, **kwargs) :
         """ what's this
 
         Args:
@@ -233,7 +255,7 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             # cnt = 0
             for file_name_with_path in self.getStocksFileWithPathAsList () :
                 file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
@@ -258,10 +280,10 @@ class CreatePics():
                     pic_name = file_name + '_' + sign + str ( percent )
                     self.draw_pics ( df=df.iloc[ rdm - self.draw_days :rdm ], pic_name=pic_name,
                                      save_portfolio_abs=portfolio )
-        except Exception as e:
-            print( f' saveTestingPics cause Error : {e}')
+        except Exception as e :
+            print ( f' saveTestingPics cause Error : {e}' )
 
-    def draw_pics(self, df, pic_name, save_portfolio_abs, *args, **kwargs):
+    def draw_pics(self, df, pic_name, save_portfolio_abs, *args, **kwargs) :
         """ what's this
 
         Args:
@@ -270,7 +292,7 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             # print ( 'draw_pics ... \r', end='\r' )
             df.index = pd.DatetimeIndex ( df[ 'Date' ] )  # 用Data列的Datatime格式数据作为索引
             # save_path = "C:\\Users\\binli\\JupyterNotebook\\" + self.folder + "\\"
@@ -306,10 +328,10 @@ class CreatePics():
                        savefig=''.join ( [ save_portfolio_abs, pic_name, '.jpg' ] )
 
                        )
-        except Exception as e:
-            print( f' draw_pics cause Error : {e}')
+        except Exception as e :
+            print ( f' draw_pics cause Error : {e}' )
 
-    def classification(self, file_name, df, *args, **kwargs):
+    def classification(self, file_name, df, *args, **kwargs) :
         """ what's this
 
         Args:
@@ -318,7 +340,7 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             rows = df.shape[ 0 ]
             if rows >= 2 :
                 maxPrice_high = df.iloc[ -2, self.idx_high ]
@@ -357,7 +379,7 @@ class CreatePics():
 
                             if temp_low > ((2 - self.bck_ratio) * maxPrice_low) \
                                     and cnt_r >= 0 and pics_u < self.pics_limit \
-                                    and (maxPrice_low_id - minPrice_low_id ) > 25 :  # 如果临时价高于最高价的94%
+                                    and (maxPrice_low_id - minPrice_low_id) > 25 :  # 如果临时价高于最高价的94%
                                 # self.append_uncertain ( df=dfs )  # drawing_pic_uncertain_rise
                                 self.savePicsByClassification ( self.classes_list[ 4 ], pics_u, file_name, dfs )
 
@@ -367,12 +389,13 @@ class CreatePics():
                             elif temp_low < (self.bck_ratio * minPrice_low) :  # 如果临时价低于最低价的106%
                                 pass
                             else :  # 临时价介于[1.06 * min, 0.94 * max]
-                                if (maxPrice_low > self.ris_ratio * minPrice_low) \
-                                        and (temp_low < (l_dfs_min + 0.33 * l_delta)) \
-                                        and (pics_r < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
-
-                                    # self.append_rise ( df=dfs )  # drawing_pic_rise
-                                    self.savePicsByClassification ( self.classes_list[ 0 ], pics_r, file_name, dfs )
+                                if (maxPrice_low > self.ris_ratio * minPrice_low) and (pics_r < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
+                                    if temp_low < (l_dfs_min + 0.33 * l_delta):
+                                        # self.append_rise ( df=dfs )  # drawing_pic_rise
+                                        self.savePicsByClassification ( self.classes_list[ 0 ], pics_r, file_name, dfs )
+                                    else:
+                                        self.savePicsByClassification ( self.classes_list[ 5 ], pics_r, file_name, dfs )
+                                        #classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain', 'riseX', 'dropX' ]
                                     pics_r += 1
 
                                 elif (maxPrice_low > self.climb_ratio * minPrice_low) \
@@ -401,7 +424,8 @@ class CreatePics():
                         maxPrice_high_id = -(i + 1)
                         maxPrice_high = df.iloc[ maxPrice_high_id, self.idx_high ]
                     else :  # 如果临时价介于最低价和最高价之间时
-                        if ((maxPrice_high_id + 2) < 0) and (-1 * (maxPrice_high_id - 48) <= df.shape[ 0 ]) :  # 满足df切片条件
+                        if ((maxPrice_high_id + 2) < 0) and (
+                                -1 * (maxPrice_high_id - 48) <= df.shape[ 0 ]) :  # 满足df切片条件
                             dfs = df.iloc[ maxPrice_high_id - 48 :maxPrice_high_id + 2 ]
 
                             h_dfs_max = dfs.iloc[ :, self.idx_high ].max ()
@@ -414,22 +438,24 @@ class CreatePics():
                             #                                   df=dfs )  # drawing_pic_uncertain_drop
                             #     pics_ud += 1
                             #     cnt_d = -50 #避免以1day的间隔连续保存多张图片
-                            if temp_high > ((2 - self.bck_ratio) * maxPrice_high) or temp_high < (self.bck_ratio * minPrice_high) :  # 如果临时价高于最高价的94%
+                            if temp_high > ((2 - self.bck_ratio) * maxPrice_high) or temp_high < (
+                                    self.bck_ratio * minPrice_high) :  # 如果临时价高于最高价的94%
                                 pass
                             else :  # 临时价介于[1.06 * min, 0.94 * max]
-                                if (maxPrice_high > self.ris_ratio * minPrice_high) \
-                                        and (temp_high > h_dfs_min + 0.66 * h_delta) \
-                                        and (pics_d < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
-                                    # self.append_drop ( df=dfs )  # drawing_pic_drop
-                                    self.savePicsByClassification ( self.classes_list[ 2 ], pics_d, file_name, dfs )
+                                if (maxPrice_high > self.ris_ratio * minPrice_high) and (pics_d < self.pics_limit) :  # 如果最高价已经超过最低价30%，就跳出循环体并返回他们的ID
+                                    if temp_high > (h_dfs_min + 0.66 * h_delta):
+                                        # self.append_drop ( df=dfs )  # drawing_pic_drop
+                                        self.savePicsByClassification ( self.classes_list[ 2 ], pics_d, file_name, dfs )
+                                    else:
+                                        self.savePicsByClassification ( self.classes_list[ 6 ], pics_d, file_name, dfs )
                                     pics_d += 1
 
                                 elif (maxPrice_high > self.climb_ratio * minPrice_high) \
                                         and (temp_high > h_dfs_min + 0.5 * h_delta) \
                                         and (pics_s < self.pics_limit) :  # 如果最高价已经超过最低价15%，就跳出循环体并返回他们的ID
                                     # self.append_slide ( df=dfs )  # drawing_pic_slide
-                                    self.savePicsByClassification(self.classes_list[ 3 ], pics_s, file_name, dfs)
-                                    #classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
+                                    self.savePicsByClassification ( self.classes_list[ 3 ], pics_s, file_name, dfs )
+                                    # classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain' ]
                                     pics_s += 1
 
                                 # else :# 否则，说明中间价格回落超过6%，为避免最大、最下价格之间存在很多波动，放弃之前确定的最高价，继续向左搜索
@@ -441,10 +467,10 @@ class CreatePics():
                         else :
                             pass
                     i += 1
-        except Exception as e:
-            print( f' classification cause Error : {e}')
+        except Exception as e :
+            print ( f' classification cause Error : {e}' )
 
-    def savePicsByClassification(self, classes, picsX, file_name, df, *args, **kwargs):
+    def savePicsByClassification(self, classes, picsX, file_name, df, *args, **kwargs) :
         """ what's this
 
         Args:
@@ -453,24 +479,23 @@ class CreatePics():
             error:
 
         """
-        try:
+        try :
             pic_name = file_name + '_' + str ( picsX )
-            portfolio = self.save_path + '\\train\\' + classes + '\\'
+            portfolio = self.save_path + self.timeStamp + '\\train\\' + classes + '\\'
             self.draw_pics ( df=df, pic_name=pic_name, save_portfolio_abs=portfolio )
-        except Exception as e:
-            print( f' savePicsByClassification cause Error : {e}')
+        except Exception as e :
+            print ( f' savePicsByClassification cause Error : {e}' )
 
-if __name__ == '__main__':
 
+if __name__ == '__main__' :
     # 通过arg='string'的形式传递字符串，只能显示第一个字符，应将arg=('string',)转化成tuple类型
-    ani = Thread(target=animation)
+    ani = Thread ( target=animation )
     # 通过setDaemon(true)来设置线程为“守护线程”
-    ani.setDaemon(True)
-    ani.start()
+    ani.setDaemon ( True )
+    ani.start ()
     ani.join ( timeout=0.2 )
 
-    cps = CreatePics()
+    cps = CreatePics (stocks_need=100,w=5,h=5)
+    cps.saveTrainingPics()
 
-    sys.exit()
-
-
+    sys.exit ()
