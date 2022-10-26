@@ -211,7 +211,10 @@ class CreatePics () :
         try:
             pass
             #1、最近2天交易量突然增大，同时此前的约10天内快速下跌，趋势很陡峭
-            #2、
+            #2、当日最低价>昨日最低价
+            #3、昨日最低价是最近5日中的最低价
+            #4、大前天、前天、昨日的最低价越来越低
+            #5、
         except Exception as e:
             print( f' saveNewestPics cause Error : {e}')
 
