@@ -3,6 +3,7 @@ import random
 import struct
 import sys
 import time
+import numpy as np
 from datetime import datetime
 from functools import wraps
 from threading import Thread
@@ -82,6 +83,7 @@ class CreatePics () :
         self.idx_low = self.columns_list.index ( 'Low' )
         self.idx_high = self.columns_list.index ( 'High' )
         self.idx_close = self.columns_list.index ( 'Close' )
+        self.idx_volume = self.columns_list.index('Volume')
         self.save_path = save_path
         self.timeStamp = self.__class__.__name__ + '_' + datetime.today ().strftime ( '%Y%m%d' )
         self.w = w
@@ -199,7 +201,7 @@ class CreatePics () :
             print ( f'getStocksFileWithPathAsList cause Error : {e}' )
 
     @setlog
-    def saveNewestPics(self, *args, **kwargs):
+    def saveNewestPics(self, offset_days=None, *args, **kwargs):
         """ what's this
 
         Args:
@@ -215,6 +217,41 @@ class CreatePics () :
             #3、昨日最低价是最近5日中的最低价
             #4、大前天、前天、昨日的最低价越来越低
             #5、
+            # cnt = 0
+            for file_name_with_path in self.getStocksFileWithPathAsList () :
+                if self.stocks_need:
+                    file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
+                    df = self.readBinaryAsDataFrame ( file_name_with_path )
+
+                    if offset_days is not None:
+                        df = df.iloc[:(-1 * offset_days),]
+                    df = df.tail(n=self.draw_days)
+                    # df.reset_index(drop=True)
+
+                    rows = df.shape[ 0 ]
+                    if rows > 10 :#至少有10个交易日的数据记录
+                        portfolio = self.save_path + self.timeStamp + '\\' + 'newest\\'
+
+                        # if (df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]) == 25:
+                        #     print('\n',f'portfolio = {portfolio}')
+                        # print('\n',f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]}')
+                        # self.stocks_need -= 1
+                        # print ( '\n', f'{self.draw_days - 2}' )
+                        # print ( '\n', f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0) is (self.draw_days - 2)}' )
+                        # cnt += 1
+
+                        # 昨日最低价是最近10日中的最低价
+                        if df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0] == 0:#(self.draw_days - 2):#从0开始计数
+                            self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
+                            self.stocks_need -= 1
+                            #大前天、前天、昨日的最低价越来越低
+                            # if np.mean(list(df.iloc[-4: -3, self.idx_low])) < np.mean(list(df.iloc[-6:-5,self.idx_low])):
+                            #     #最近2天交易量突然增大
+                            #     if np.sum(list(df.iloc[-2:-1, self.idx_volume])) > np.sum(list(df.iloc[-5:-3, self.idx_volume])):
+                            #         #保持到本地磁盘
+                            #         self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
+                            #         self.stocks_need -= 1
+            # print(f'cnt = {cnt}')
         except Exception as e:
             print( f' saveNewestPics cause Error : {e}')
 
@@ -499,6 +536,7 @@ if __name__ == '__main__' :
     ani.join ( timeout=0.2 )
 
     cps = CreatePics (stocks_need=100,w=5,h=5)
-    cps.saveTrainingPics()
+    # cps.saveTrainingPics()
+    cps.saveNewestPics(offset_days=5)
 
     sys.exit ()
