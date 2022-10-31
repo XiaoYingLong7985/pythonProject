@@ -150,12 +150,12 @@ class CreatePics () :
         """
         try :
             lst = [ ]
-            rec = 0
+            # rec = 0
             with open ( file, 'rb' ) as o :  # 'rb'代表以二进制形式的字节类型读入
                 while (1) :
                     content = o.read ( 32 )
                     lens = content.__len__ ()
-                    if lens >= 32 and rec <= self.trade_days_limit :
+                    if lens >= 32 :# and rec <= self.trade_days_limit :
                         dic = {}
                         b_tup = struct.unpack_from ( '<IIIIIIII', content, 0 )  # fmt- <代表小端，I代表无符号int类型
                         dic[ 'date' ] = '-'.join (
@@ -168,13 +168,13 @@ class CreatePics () :
 
                         tup = (dic[ 'date' ], dic[ 'open' ], dic[ 'pmax' ], dic[ 'pmin' ], dic[ 'clos' ], dic[ 'tnov' ])
                         lst.append ( tup )
-                        rec += 1
+                        # rec += 1
 
                     else :
                         break
             o.close ()
             # 默认最多读取1000条记录
-            return pd.DataFrame ( data=lst, columns=self.columns_list )
+            return pd.DataFrame ( data=lst, columns=self.columns_list ).tail(n=self.trade_days_limit)
 
         except Exception as e :
             print ( f'readBinaryAsDataFrame cause Error : {e}' )
@@ -221,11 +221,13 @@ class CreatePics () :
             for file_name_with_path in self.getStocksFileWithPathAsList () :
                 if self.stocks_need:
                     file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
-                    df = self.readBinaryAsDataFrame ( file_name_with_path )
+                    dfi = self.readBinaryAsDataFrame ( file_name_with_path )
 
                     if offset_days is not None:
-                        df = df.iloc[:(-1 * offset_days),]
-                    df = df.tail(n=self.draw_days)
+                        df = (dfi.iloc[:(-1 * offset_days),]).tail(n=self.draw_days)
+                    else:
+                        df = dfi.tail(n=self.draw_days)
+                    # df = df.tail(n=self.draw_days)
                     # df.reset_index(drop=True)
 
                     rows = df.shape[ 0 ]
@@ -237,20 +239,26 @@ class CreatePics () :
                         # print('\n',f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]}')
                         # self.stocks_need -= 1
                         # print ( '\n', f'{self.draw_days - 2}' )
-                        # print ( '\n', f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0) is (self.draw_days - 2)}' )
+                        lft = int(df.iloc[-10:, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmin(axis=0)[0])
+                        # print ( f'lft = {lft}, types = {type(lft), type(8)}, isTrue = {lft == 8}' )
                         # cnt += 1
 
                         # 昨日最低价是最近10日中的最低价
-                        if df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0] == 0:#(self.draw_days - 2):#从0开始计数
-                            self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
-                            self.stocks_need -= 1
+                        if lft == 8:#从0开始计数
                             #大前天、前天、昨日的最低价越来越低
-                            # if np.mean(list(df.iloc[-4: -3, self.idx_low])) < np.mean(list(df.iloc[-6:-5,self.idx_low])):
-                            #     #最近2天交易量突然增大
-                            #     if np.sum(list(df.iloc[-2:-1, self.idx_volume])) > np.sum(list(df.iloc[-5:-3, self.idx_volume])):
-                            #         #保持到本地磁盘
-                            #         self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
-                            #         self.stocks_need -= 1
+                            lft_mean = float(np.mean(list(df.iloc[-4: -3, self.idx_low])))
+                            rht_mean = float(np.mean(list(df.iloc[-6:-5,self.idx_low])))
+                            # print(f'{type(lft_mean),lft_mean} is < {rht_mean,type(rht_mean)}, {lft_mean < rht_mean}')
+                            if lft_mean < rht_mean:
+                                # print('aaa')
+                                #最近2天交易量突然增大
+                                lft_sum = float(np.sum(list(df.iloc[-2:-1, self.idx_volume])))
+                                rht_sum = float(np.sum(list(df.iloc[-5:-3, self.idx_volume])))
+                                # print ( f'{type ( lft_sum ), lft_sum} is > {rht_sum, type ( rht_sum )}, {lft_sum > rht_sum}' )
+                                if lft_sum > rht_sum:
+                                    #保持到本地磁盘
+                                    self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
+                                    self.stocks_need -= 1
             # print(f'cnt = {cnt}')
         except Exception as e:
             print( f' saveNewestPics cause Error : {e}')
@@ -537,6 +545,6 @@ if __name__ == '__main__' :
 
     cps = CreatePics (stocks_need=100,w=5,h=5)
     # cps.saveTrainingPics()
-    cps.saveNewestPics(offset_days=5)
+    cps.saveNewestPics(offset_days=None)
 
     sys.exit ()
