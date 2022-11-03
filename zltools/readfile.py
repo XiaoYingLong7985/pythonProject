@@ -10,8 +10,30 @@ from threading import Thread
 
 import mplfinance as mpf  # 金融画图库
 import pandas as pd
+import time
 
+#计算函数耗时的装饰器
+def timer(func):
+    """ what's this
 
+    Args:
+        arg:
+    Raises:
+        error:
+
+    """
+    @wraps( func )
+    def func_wrapper(*args, **kwargs):
+        start = time.time()
+        re = func(*args, **kwargs)
+        end = time.time()
+        spend = end - start
+        if spend * 1000 > 10:
+            print(f'{func.__name__} cost {round(spend * 1000, 3)} ms')
+        return re
+    return func_wrapper
+
+#记录函数调用信息的装饰器
 def setlog(func) :
     """ what's this
 
@@ -55,6 +77,26 @@ def animation(*args, **kwargs) :
     except Exception as e :
         print ( f' animation cause Error : {e}' )
 
+def openAnimation(open=True, *args, **kwargs):
+    """ what's this
+
+    Args:
+        arg:
+    Raises:
+        error:
+
+    """
+    try:
+        if open:
+            # 通过arg='string'的形式传递字符串，只能显示第一个字符，应将arg=('string',)转化成tuple类型
+            ani = Thread ( target=animation )
+            # 通过setDaemon(true)来设置线程为“守护线程”
+            ani.setDaemon ( True )
+            ani.start ()
+            ani.join ( timeout=0.2 )
+    except Exception as e:
+        print( f' openAnimation cause Error : {e}')
+
 
 class CreatePics () :
     classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain', 'riseX', 'dropX' ]
@@ -80,6 +122,7 @@ class CreatePics () :
         self.root_path = root_path
         self.stocks_need = stocks_need
         self.draw_days = draw_days
+        self.idx_open = self.columns_list.index( 'Open' )
         self.idx_low = self.columns_list.index ( 'Low' )
         self.idx_high = self.columns_list.index ( 'High' )
         self.idx_close = self.columns_list.index ( 'Close' )
@@ -138,6 +181,7 @@ class CreatePics () :
         except Exception as e :
             print ( f' createFolders cause Error : {e}' )
 
+    # @timer
     def readBinaryAsDataFrame(self, file, *args, **kwargs) -> pd.DataFrame :
         """ what's this
             每次从本都读取文件的方式都是一样的，对于不同的数据需求，可以在输出的dataFrame中切片
@@ -179,6 +223,7 @@ class CreatePics () :
         except Exception as e :
             print ( f'readBinaryAsDataFrame cause Error : {e}' )
 
+    # @timer
     def getStocksFileWithPathAsList(self, *args, **kwargs) -> list :
         """ what's this
 
@@ -199,6 +244,131 @@ class CreatePics () :
 
         except Exception as e :
             print ( f'getStocksFileWithPathAsList cause Error : {e}' )
+
+    @setlog
+    @timer
+    def checkFilterPolicy(self, *args, **kwargs):
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            # ant, vnt = 0, 0
+            for file_name_with_path in self.getStocksFileWithPathAsList () :
+                file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
+                dfi = self.readBinaryAsDataFrame ( file_name_with_path )
+                # dfi = dfi.reset_index(drop=True)
+
+                rows = dfi.shape[ 0 ]
+                ant, vnt = 0, 0
+                for i in range(rows - 10 - 1):
+                    # #每循环一次，去掉最后一行
+                    # # df = dfi.iloc[ :rows - i - 1, ]
+                    # dfi.drop(axis=0, index=(rows - i - 1), inplace=True)
+                    # # print( f'last line of df = {dfi.iloc[ -1 ]} \n last line of dfi = {dfi.iloc[ -1 ]}')
+                    # # 最后10行用作验证
+                    # dfv = dfi.tail ( n=10 )
+                    # dfv = dfv.reset_index(drop=True)
+                    # open_pri = dfv.iloc[0, self.idx_open]
+                    # close_pri = dfv.iloc[0, self.idx_close]
+                    # # 取出不含最后10行的数据
+                    # dfc = dfi.iloc[:-10,]
+                    # dfc = dfc.reset_index(drop=True)
+                    # today_close_pri = dfc.iloc[-1, self.idx_close]
+                    # today_low_pri = dfc.iloc[-1, self.idx_low]
+
+                    # if (open_pri >= today_close_pri and close_pri > today_low_pri) or (open_pri < today_close_pri and close_pri > today_close_pri):
+                    #     if self.filterPolicyAsBool(dfc):
+                    #         ant += 1
+                    #         if dfv.iloc[:,self.idx_high].max() >= today_close_pri * 1.05:
+                    #             vnt += 1
+                    ant , vnt = self.splitOnceForSpendTimeMeasure(dfi, rows, i, ant, vnt, file_name)
+
+                print(f'{file_name} , {vnt}/{ant} , {vnt/ant if ant else 1}')
+            # print(f'vnt / ant = {vnt}/{ant} = {vnt/ant}')
+
+        except Exception as e:
+            print( f'  cause Error : {e}')
+
+    #@timer
+    def splitOnceForSpendTimeMeasure(self, dfi, rows, i, ant, vnt, file_name, *args, **kwargs)->tuple:
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            # 每循环一次，去掉最后一行
+            df = dfi.iloc[ :rows - i - 1, ]
+            # dfi.drop ( axis=0, index=(rows - i - 1), inplace=True )
+            # print( f'last line of df = {dfi.iloc[ -1 ]} \n last line of dfi = {dfi.iloc[ -1 ]}')
+            # 最后10行用作验证
+            dfv = df.tail ( n=10 )
+            dfv = dfv.reset_index ( drop=True )
+            open_pri = dfv.iloc[ 0, self.idx_open ]
+            close_pri = dfv.iloc[ 0, self.idx_close ]
+            # 取出不含最后10行的数据
+            dfc = df.iloc[ :-10, ]
+            # dfc = dfc.reset_index ( drop=True )
+            today_close_pri = dfc.iloc[ -1, self.idx_close ]
+            today_low_pri = dfc.iloc[ -1, self.idx_low ]
+
+            if (open_pri >= today_close_pri and close_pri > today_low_pri) or (
+                    open_pri < today_close_pri and close_pri > today_close_pri) :
+                if self.filterPolicyAsBool ( dfc ) :
+                    ant += 1
+                    if dfv.iloc[ :, self.idx_high ].max () >= today_close_pri * 1.05 :
+                        vnt += 1
+                    else:
+                        portfolio = self.save_path + 'checkFilterPolicy\\'
+                        self.draw_pics(df.iloc[-50:,], pic_name=''.join([file_name,str(ant)]), save_portfolio_abs=portfolio)
+            return ant, vnt
+        except Exception as e:
+            print( f' splitOnceForSpendTimeMeasure cause Error : {e}')
+
+    # @timer
+    def filterPolicyAsBool(self, df, *args, **kwargs)->bool:
+        """ what's this
+
+        Args:
+            arg:
+        Raises:
+            error:
+
+        """
+        try:
+            flg = False
+            lft = int (df.iloc[ -10 :, self.idx_low : self.idx_low + 1 ].reset_index ( drop=True ).idxmin ( axis=0 )[ 0 ] )
+            # print ( f'lft = {lft}, types = {type(lft), type(8)}, isTrue = {lft == 8}' )
+            # cnt += 1
+
+            # 昨日最低价是最近10日中的最低价
+            if lft == 8 :  # 从0开始计数
+                # 大前天、前天、昨日的最低价越来越低
+                lft_mean =  np.mean ( list ( df.iloc[ -4 : -3, self.idx_low ] ) )
+                rht_mean =  np.mean ( list ( df.iloc[ -6 :-5, self.idx_low ] ) )
+                # print(f'{type(lft_mean),lft_mean} is < {rht_mean,type(rht_mean)}, {lft_mean < rht_mean}')
+                if lft_mean < rht_mean :
+                    # print('aaa')
+                    # 最近2天交易量突然增大
+                    lft_sum =  np.sum ( list ( df.iloc[ -2 :-1, self.idx_volume ] ) )
+                    rht_sum =  np.sum ( list ( df.iloc[ -5 :-3, self.idx_volume ] ) )
+                    # print ( f'{type ( lft_sum ), lft_sum} is > {rht_sum, type ( rht_sum )}, {lft_sum > rht_sum}' )
+                    if lft_sum > rht_sum :
+                        # 保持到本地磁盘
+                        flg = True
+            return flg
+
+        except Exception as e:
+            print( f' filterPolicy cause Error : {e}')
+
 
     @setlog
     def saveNewestPics(self, offset_days=None, *args, **kwargs):
@@ -234,31 +404,33 @@ class CreatePics () :
                     if rows > 10 :#至少有10个交易日的数据记录
                         portfolio = self.save_path + self.timeStamp + '\\' + 'newest\\'
 
-                        # if (df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]) == 25:
-                        #     print('\n',f'portfolio = {portfolio}')
-                        # print('\n',f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]}')
-                        # self.stocks_need -= 1
-                        # print ( '\n', f'{self.draw_days - 2}' )
-                        lft = int(df.iloc[-10:, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmin(axis=0)[0])
-                        # print ( f'lft = {lft}, types = {type(lft), type(8)}, isTrue = {lft == 8}' )
-                        # cnt += 1
+                        # # if (df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]) == 25:
+                        # #     print('\n',f'portfolio = {portfolio}')
+                        # # print('\n',f'{df.iloc[:-10, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmax(axis=0)[0]}')
+                        # # self.stocks_need -= 1
+                        # # print ( '\n', f'{self.draw_days - 2}' )
+                        # lft = int(df.iloc[-10:, self.idx_low: self.idx_low + 1].reset_index(drop=True).idxmin(axis=0)[0])
+                        # # print ( f'lft = {lft}, types = {type(lft), type(8)}, isTrue = {lft == 8}' )
+                        # # cnt += 1
+                        #
+                        # # 昨日最低价是最近10日中的最低价
+                        # if lft == 8:#从0开始计数
+                        #     #大前天、前天、昨日的最低价越来越低
+                        #     lft_mean = float(np.mean(list(df.iloc[-4: -3, self.idx_low])))
+                        #     rht_mean = float(np.mean(list(df.iloc[-6:-5,self.idx_low])))
+                        #     # print(f'{type(lft_mean),lft_mean} is < {rht_mean,type(rht_mean)}, {lft_mean < rht_mean}')
+                        #     if lft_mean < rht_mean:
+                        #         # print('aaa')
+                        #         #最近2天交易量突然增大
+                        #         lft_sum = float(np.sum(list(df.iloc[-2:-1, self.idx_volume])))
+                        #         rht_sum = float(np.sum(list(df.iloc[-5:-3, self.idx_volume])))
+                        #         # print ( f'{type ( lft_sum ), lft_sum} is > {rht_sum, type ( rht_sum )}, {lft_sum > rht_sum}' )
+                        #         if lft_sum > rht_sum:
+                        if self.filterPolicyAsBool(df):
+                            #保持到本地磁盘
+                            self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
+                            self.stocks_need -= 1
 
-                        # 昨日最低价是最近10日中的最低价
-                        if lft == 8:#从0开始计数
-                            #大前天、前天、昨日的最低价越来越低
-                            lft_mean = float(np.mean(list(df.iloc[-4: -3, self.idx_low])))
-                            rht_mean = float(np.mean(list(df.iloc[-6:-5,self.idx_low])))
-                            # print(f'{type(lft_mean),lft_mean} is < {rht_mean,type(rht_mean)}, {lft_mean < rht_mean}')
-                            if lft_mean < rht_mean:
-                                # print('aaa')
-                                #最近2天交易量突然增大
-                                lft_sum = float(np.sum(list(df.iloc[-2:-1, self.idx_volume])))
-                                rht_sum = float(np.sum(list(df.iloc[-5:-3, self.idx_volume])))
-                                # print ( f'{type ( lft_sum ), lft_sum} is > {rht_sum, type ( rht_sum )}, {lft_sum > rht_sum}' )
-                                if lft_sum > rht_sum:
-                                    #保持到本地磁盘
-                                    self.draw_pics ( df=df, pic_name=file_name, save_portfolio_abs=portfolio )
-                                    self.stocks_need -= 1
             # print(f'cnt = {cnt}')
         except Exception as e:
             print( f' saveNewestPics cause Error : {e}')
@@ -535,16 +707,19 @@ class CreatePics () :
             print ( f' savePicsByClassification cause Error : {e}' )
 
 
+
 if __name__ == '__main__' :
-    # 通过arg='string'的形式传递字符串，只能显示第一个字符，应将arg=('string',)转化成tuple类型
-    ani = Thread ( target=animation )
-    # 通过setDaemon(true)来设置线程为“守护线程”
-    ani.setDaemon ( True )
-    ani.start ()
-    ani.join ( timeout=0.2 )
+    # # 通过arg='string'的形式传递字符串，只能显示第一个字符，应将arg=('string',)转化成tuple类型
+    # ani = Thread ( target=animation )
+    # # 通过setDaemon(true)来设置线程为“守护线程”
+    # ani.setDaemon ( True )
+    # ani.start ()
+    # ani.join ( timeout=0.2 )
+    openAnimation(open=False)
 
     cps = CreatePics (stocks_need=100,w=5,h=5)
     # cps.saveTrainingPics()
-    cps.saveNewestPics(offset_days=None)
+    # cps.saveNewestPics(offset_days=None)
+    cps.checkFilterPolicy()
 
     sys.exit ()
