@@ -329,11 +329,11 @@ class CreatePics () :
                 # if dfv.iloc[ :, self.idx_high ].max () >= close_pri * 1.05 :
                 if dfv.iloc[ :, self.idx_high ].max () >= today_close_pri * 1.05 :
                     self.vnt += 1
-                    portfolio = self.save_path + 'gain+5\\'
+                    portfolio = self.save_path + 'CreatePics_20221107\\'#gain+5
                     self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
                 else:
                     pass
-                    portfolio = self.save_path + 'gain+5nan\\'
+                    portfolio = self.save_path + 'CreatePics_20221107\\'#gain+5nan
                     self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
             # return ant, vnt
         except Exception as e:
@@ -518,7 +518,7 @@ class CreatePics () :
         except Exception as e :
             print ( f' saveTestingPics cause Error : {e}' )
 
-    def draw_pics(self, df, pic_name, save_portfolio_abs, *args, **kwargs) :
+    def draw_pics(self, df:pandas.DataFrame, pic_name, save_portfolio_abs, lab = False, *args, **kwargs) :
         """ what's this
 
         Args:
@@ -528,11 +528,20 @@ class CreatePics () :
 
         """
         try :
+            if lab:
+                x_lst = [np.nan for i in range(60)]
+                x_lst[49] = df.iloc[49, self.idx_low]
+                # add_plot = [mpf.make_addplot ( x_lst, scatter=True, markersize=100, marker='$\clubsuit$', color='m', alpha=0.5 ),]#mpf.make_addplot ( df[['Low']]) $\circledR$
+                add_plot = [ mpf.make_addplot ( x_lst, scatter=True, markersize=200, marker='$\clubsuit$', color='lime', alpha = 0.9
+                                                ), ]
+            else:
+                add_plot = []
             # print ( 'draw_pics ... \r', end='\r' )
             df.index = pd.DatetimeIndex ( df[ 'Date' ] )  # 用Data列的Datatime格式数据作为索引
             # save_path = "C:\\Users\\binli\\JupyterNotebook\\" + self.folder + "\\"
             mpf.plot ( df,
                        type='candle',
+                       addplot=add_plot,
                        figsize=(self.w, self.h),
                        volume=True,
                        mav=(5, 10, 20),
@@ -563,6 +572,7 @@ class CreatePics () :
                        savefig=''.join ( [ save_portfolio_abs, pic_name, '.jpg' ] )
 
                        )
+            pass
         except Exception as e :
             print ( f' draw_pics cause Error : {e}' )
 
