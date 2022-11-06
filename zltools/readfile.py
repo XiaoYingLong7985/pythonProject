@@ -9,6 +9,7 @@ from functools import wraps
 from threading import Thread
 
 import mplfinance as mpf  # 金融画图库
+import pandas
 import pandas as pd
 import time
 
@@ -257,17 +258,17 @@ class CreatePics () :
 
         """
         try:
-            # ant, vnt = 0, 0
+            self.ant, self.vnt = 0, 0
             for file_name_with_path in self.getStocksFileWithPathAsList () :
                 file_name = file_name_with_path.split ( '\\' )[ -1 ].split ( '.' )[ -2 ]
                 dfi = self.readBinaryAsDataFrame ( file_name_with_path )
                 # dfi = dfi.reset_index(drop=True)
 
                 rows = dfi.shape[ 0 ]
-                ant, vnt = 0, 0
+                # ant, vnt = 0, 0
                 for i in range(rows - 10 - 1):
                     # #每循环一次，去掉最后一行
-                    # # df = dfi.iloc[ :rows - i - 1, ]
+                    df = dfi.iloc[ :rows - i - 1, ]
                     # dfi.drop(axis=0, index=(rows - i - 1), inplace=True)
                     # # print( f'last line of df = {dfi.iloc[ -1 ]} \n last line of dfi = {dfi.iloc[ -1 ]}')
                     # # 最后10行用作验证
@@ -286,16 +287,16 @@ class CreatePics () :
                     #         ant += 1
                     #         if dfv.iloc[:,self.idx_high].max() >= today_close_pri * 1.05:
                     #             vnt += 1
-                    ant , vnt = self.splitOnceForSpendTimeMeasure(dfi, rows, i, ant, vnt, file_name)
+                    self.splitOnceForSpendTimeMeasure(df, file_name)
 
-                print(f'{file_name} , {vnt}/{ant} , {vnt/ant if ant else 1}')
-            # print(f'vnt / ant = {vnt}/{ant} = {vnt/ant}')
+                # print(f'{file_name} , {vnt}/{ant} , {vnt/ant if ant else 1}')
+            print(f'vnt / ant = {self.vnt}/{self.ant} = {self.vnt/self.ant}')
 
         except Exception as e:
             print( f'  cause Error : {e}')
 
     #@timer
-    def splitOnceForSpendTimeMeasure(self, dfi, rows, i, ant, vnt, file_name, *args, **kwargs)->tuple:
+    def splitOnceForSpendTimeMeasure(self, df, file_name, *args, **kwargs):
         """ what's this
 
         Args:
@@ -306,7 +307,7 @@ class CreatePics () :
         """
         try:
             # 每循环一次，去掉最后一行
-            df = dfi.iloc[ :rows - i - 1, ]
+            # df = dfi.iloc[ :rows - i - 1, ]
             # dfi.drop ( axis=0, index=(rows - i - 1), inplace=True )
             # print( f'last line of df = {dfi.iloc[ -1 ]} \n last line of dfi = {dfi.iloc[ -1 ]}')
             # 最后10行用作验证
@@ -316,25 +317,30 @@ class CreatePics () :
             close_pri = dfv.iloc[ 0, self.idx_close ]
             # 取出不含最后10行的数据
             dfc = df.iloc[ :-10, ]
-            # dfc = dfc.reset_index ( drop=True )
+            ## dfc = dfc.reset_index ( drop=True )
             today_close_pri = dfc.iloc[ -1, self.idx_close ]
             today_low_pri = dfc.iloc[ -1, self.idx_low ]
 
-            if (open_pri >= today_close_pri and close_pri > today_low_pri) or (
-                    open_pri < today_close_pri and close_pri > today_close_pri) :
-                if self.filterPolicyAsBool ( dfc ) :
-                    ant += 1
-                    if dfv.iloc[ :, self.idx_high ].max () >= today_close_pri * 1.05 :
-                        vnt += 1
-                    else:
-                        portfolio = self.save_path + 'checkFilterPolicy\\'
-                        self.draw_pics(df.iloc[-50:,], pic_name=''.join([file_name,str(ant)]), save_portfolio_abs=portfolio)
-            return ant, vnt
+            if (self.filterPolicyAsBool ( dfc ) ) and ((open_pri >= today_close_pri and close_pri > today_low_pri) or (
+                    open_pri < today_close_pri and close_pri > today_close_pri)) :
+            # if self.filterPolicyAsBool ( dfc ) :
+                self.ant += 1
+
+                # if dfv.iloc[ :, self.idx_high ].max () >= close_pri * 1.05 :
+                if dfv.iloc[ :, self.idx_high ].max () >= today_close_pri * 1.05 :
+                    self.vnt += 1
+                    portfolio = self.save_path + 'gain+5\\'
+                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
+                else:
+                    pass
+                    portfolio = self.save_path + 'gain+5nan\\'
+                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
+            # return ant, vnt
         except Exception as e:
             print( f' splitOnceForSpendTimeMeasure cause Error : {e}')
 
     # @timer
-    def filterPolicyAsBool(self, df, *args, **kwargs)->bool:
+    def filterPolicyAsBool(self, df:pandas.DataFrame, *args, **kwargs)->bool:
         """ what's this
 
         Args:
@@ -351,17 +357,26 @@ class CreatePics () :
 
             # 昨日最低价是最近10日中的最低价
             if lft == 8 :  # 从0开始计数
+                per2 = df.iloc[ -3, self.idx_low ]
+                per3 = df.iloc[ -4, self.idx_low ]
+                per4 = df.iloc[ -5, self.idx_low ]
+                per5 = df.iloc[ -6, self.idx_low ]
                 # 大前天、前天、昨日的最低价越来越低
-                lft_mean =  np.mean ( list ( df.iloc[ -4 : -3, self.idx_low ] ) )
-                rht_mean =  np.mean ( list ( df.iloc[ -6 :-5, self.idx_low ] ) )
+                lft_mean =  (per2 + per3) * 0.5#np.mean ( list ( df.iloc[ -4 : -3, self.idx_low ] ) )
+                rht_mean =  (per4 + per5) * 0.5#np.mean ( list ( df.iloc[ -6 :-5, self.idx_low ] ) )
                 # print(f'{type(lft_mean),lft_mean} is < {rht_mean,type(rht_mean)}, {lft_mean < rht_mean}')
                 if lft_mean < rht_mean :
                     # print('aaa')
+                    day0 = df.iloc[-1,self.idx_volume]
+                    day1 = df.iloc[-2,self.idx_volume]
+                    day2 = df.iloc[-3,self.idx_volume]
+                    day3 = df.iloc[-4,self.idx_volume]
+                    day4 = df.iloc[-5,self.idx_volume]
                     # 最近2天交易量突然增大
-                    lft_sum =  np.sum ( list ( df.iloc[ -2 :-1, self.idx_volume ] ) )
-                    rht_sum =  np.sum ( list ( df.iloc[ -5 :-3, self.idx_volume ] ) )
+                    lft_sum = day0 + day1 #np.sum ( list ( df.iloc[ -2 :-1, self.idx_volume ] ) )
+                    rht_sum = day2 + day3 + day4 #np.sum ( list ( df.iloc[ -5 :-3, self.idx_volume ] ) )
                     # print ( f'{type ( lft_sum ), lft_sum} is > {rht_sum, type ( rht_sum )}, {lft_sum > rht_sum}' )
-                    if lft_sum > rht_sum :
+                    if (lft_sum > rht_sum) and (day0 > day1):
                         # 保持到本地磁盘
                         flg = True
             return flg
@@ -717,7 +732,7 @@ if __name__ == '__main__' :
     # ani.join ( timeout=0.2 )
     openAnimation(open=False)
 
-    cps = CreatePics (stocks_need=100,w=5,h=5)
+    cps = CreatePics (stocks_need=100,w=8,h=5)
     # cps.saveTrainingPics()
     # cps.saveNewestPics(offset_days=None)
     cps.checkFilterPolicy()
