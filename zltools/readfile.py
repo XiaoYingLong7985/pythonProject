@@ -330,11 +330,11 @@ class CreatePics () :
                 if dfv.iloc[ :, self.idx_high ].max () >= today_close_pri * 1.05 :
                     self.vnt += 1
                     portfolio = self.save_path + 'CreatePics_20221107\\'#gain+5
-                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
+                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio, lab=True)
                 else:
                     pass
                     portfolio = self.save_path + 'CreatePics_20221107\\'#gain+5nan
-                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio)
+                    self.draw_pics(df.iloc[-60:,], pic_name=''.join([file_name,'_',str(self.ant)]), save_portfolio_abs=portfolio, lab=True)
             # return ant, vnt
         except Exception as e:
             print( f' splitOnceForSpendTimeMeasure cause Error : {e}')
@@ -386,6 +386,7 @@ class CreatePics () :
 
 
     @setlog
+    @timer
     def saveNewestPics(self, offset_days=None, *args, **kwargs):
         """ what's this
 
@@ -740,11 +741,11 @@ if __name__ == '__main__' :
     # ani.setDaemon ( True )
     # ani.start ()
     # ani.join ( timeout=0.2 )
-    openAnimation(open=False)
+    openAnimation(open=True)
 
     cps = CreatePics (stocks_need=100,w=8,h=5)
     # cps.saveTrainingPics()
-    # cps.saveNewestPics(offset_days=None)
-    cps.checkFilterPolicy()
+    cps.saveNewestPics(offset_days=None)
+    # cps.checkFilterPolicy()
 
     sys.exit ()
