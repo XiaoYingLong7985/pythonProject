@@ -100,6 +100,7 @@ def openAnimation(open=True, *args, **kwargs):
 
 
 class CreatePics () :
+    delisted = ['sh600090', 'sz002260', 'sh600816', 'sh600226', 'sz000796']
     classes_list = [ 'rise', 'climb', 'drop', 'slide', 'uncertain', 'riseX', 'dropX' ]
 
     def __init__(self, columns_list=None,
@@ -240,7 +241,8 @@ class CreatePics () :
                 if files :
                     for file in files :
                         if file[ :4 ] == 'sh60' or file[ :4 ] == 'sz00' :
-                            lst.append ( root + '\\' + file )
+                            if file[:8] not in self.delisted:
+                                lst.append ( root + '\\' + file )
             return lst
 
         except Exception as e :
@@ -745,7 +747,7 @@ if __name__ == '__main__' :
 
     cps = CreatePics (stocks_need=100,w=8,h=5)
     # cps.saveTrainingPics()
-    cps.saveNewestPics(offset_days=None)
+    cps.saveNewestPics(offset_days=6)
     # cps.checkFilterPolicy()
 
     sys.exit ()
