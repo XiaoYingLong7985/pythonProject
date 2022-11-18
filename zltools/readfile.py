@@ -747,7 +747,11 @@ if __name__ == '__main__' :
 
     cps = CreatePics (stocks_need=100,w=8,h=5)
     # cps.saveTrainingPics()
-    cps.saveNewestPics(offset_days=6)
+    cps.saveNewestPics(offset_days=None)
     # cps.checkFilterPolicy()
+
+    #打开文件夹
+    file_path = cps.save_path + cps.timeStamp + '\\' + 'newest\\'
+    os.startfile(file_path)#"C:\\Users\\binli\\JupyterNotebook\\CreatePics_20221117\\newest"
 
     sys.exit ()
