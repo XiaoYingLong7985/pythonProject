@@ -1,3 +1,5 @@
+import random
+
 import win32api as wp
 import pyautogui as pag
 import time
@@ -18,7 +20,7 @@ pag.moveTo(x=1800, y=1055, duration=3)
 
 pag.click()
 #键盘输入‘abc’键值，每次输入间隔时间0.25s
-pag.write('147853', interval=0.25)
+pag.write('147853', interval=random.uniform(0.2,0.5))
 pag.press('enter')
 #取屏幕x,y点的RGB颜色值
 # print(pag.screenshot().getpixel((2000,2000)))
@@ -40,16 +42,18 @@ win32gui.ShowWindow(hwnd, win32con.SW_SHOW)
 # #隐藏窗口，不要轻易隐藏，找不到了
 # win32gui.ShowWindow(hwnd, win32con.SW_HIDE)
 
-time.sleep(3)
+time.sleep(6)
 
 pag.press('esc')
 
 #去掉打新股的对话框
-time.sleep(10)
+time.sleep(6)
+pag.press('esc')
+time.sleep(3)
 pag.press('esc')
 
 #点击设置按钮
-pag.moveTo(x=3679, y=23, duration=10)
+pag.moveTo(x=3679, y=23, duration=5)
 pag.click()
 #点击“盘后数据下载”
 pag.moveTo(x=3633, y=381, duration=3)
@@ -60,3 +64,6 @@ pag.click()
 #点击“开始下载”
 pag.moveTo(x=2150, y=1332, duration=3)
 pag.click()
+
+#写一个显示屏幕坐标的APP
+#搭建APPIUM开发环境
