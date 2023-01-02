@@ -1,172 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>Views</class>
- <widget class="QMainWindow" name="Views">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>2500</width>
-    <height>1400</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Views</string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <layout class="QGridLayout" name="gridLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetDefaultConstraint</enum>
-      </property>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>2500</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menu_file">
-    <property name="title">
-     <string>文件</string>
-    </property>
-    <addaction name="action_start"/>
-    <addaction name="action_next"/>
-   </widget>
-   <widget class="QMenu" name="menu_edit">
-    <property name="title">
-     <string>编辑</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_observe">
-    <property name="title">
-     <string>窗体</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_view">
-    <property name="title">
-     <string>视图</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_setting">
-    <property name="title">
-     <string>设置</string>
-    </property>
-    <addaction name="action_hook"/>
-    <addaction name="action_umbrella"/>
-    <addaction name="action_jump"/>
-    <addaction name="action_hammer"/>
-    <addaction name="action_up3days"/>
-    <addaction name="action_rise3in5"/>
-    <addaction name="action_riseform"/>
-    <addaction name="action_cheapform"/>
-    <addaction name="action_powerform"/>
-    <addaction name="action_weakform"/>
-   </widget>
-   <widget class="QMenu" name="menu_window">
-    <property name="title">
-     <string>窗口</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_help">
-    <property name="title">
-     <string>帮助</string>
-    </property>
-   </widget>
-   <addaction name="menu_file"/>
-   <addaction name="menu_edit"/>
-   <addaction name="menu_observe"/>
-   <addaction name="menu_view"/>
-   <addaction name="menu_setting"/>
-   <addaction name="menu_window"/>
-   <addaction name="menu_help"/>
-  </widget>
-  <action name="action_start">
-   <property name="text">
-    <string>start</string>
-   </property>
-  </action>
-  <action name="action_next">
-   <property name="text">
-    <string>next</string>
-   </property>
-  </action>
-  <action name="action_hook">
-   <property name="text">
-    <string>hook</string>
-   </property>
-  </action>
-  <action name="action_umbrella">
-   <property name="text">
-    <string>umbrella</string>
-   </property>
-  </action>
-  <action name="action_jump">
-   <property name="text">
-    <string>jump</string>
-   </property>
-  </action>
-  <action name="action_hammer">
-   <property name="text">
-    <string>hammer</string>
-   </property>
-  </action>
-  <action name="action_up3days">
-   <property name="text">
-    <string>up3days</string>
-   </property>
-  </action>
-  <action name="action_rise3in5">
-   <property name="text">
-    <string>rise3in5</string>
-   </property>
-  </action>
-  <action name="action_riseform">
-   <property name="text">
-    <string>riseform</string>
-   </property>
-  </action>
-  <action name="action_cheapform">
-   <property name="text">
-    <string>cheapform</string>
-   </property>
-  </action>
-  <action name="action_powerform">
-   <property name="text">
-    <string>powerform</string>
-   </property>
-  </action>
-  <action name="action_weakform">
-   <property name="text">
-    <string>weakform</string>
-   </property>
-  </action>
- </widget>
- <resources/>
- <connections>
-  <connection>
-   <sender>action_start</sender>
-   <signal>triggered(bool)</signal>
-   <receiver>statusBar</receiver>
-   <slot>update()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1249</x>
-     <y>1389</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
-</ui>
+<?xml version="1.0" encoding="UTF-8"?><ui version="4.0"> <class>Views</class> <widget class="QMainWindow" name="Views">  <property name="geometry">   <rect>    <x>0</x>    <y>0</y>    <width>618</width>    <height>1000</height>   </rect>  </property>  <property name="windowTitle">   <string>Views</string>  </property>  <widget class="QWidget" name="centralwidget">   <layout class="QHBoxLayout" name="horizontalLayout">    <item>     <layout class="QGridLayout" name="gridLayout">      <property name="sizeConstraint">       <enum>QLayout::SetDefaultConstraint</enum>      </property>      <property name="spacing">       <number>2</number>      </property>     </layout>    </item>   </layout>  </widget>  <widget class="QStatusBar" name="statusBar"/>  <widget class="QMenuBar" name="menuBar">   <property name="geometry">    <rect>     <x>0</x>     <y>0</y>     <width>618</width>     <height>22</height>    </rect>   </property>   <widget class="QMenu" name="menu_file">    <property name="title">     <string>文件</string>    </property>    <addaction name="action_start"/>    <addaction name="action_next"/>   </widget>   <widget class="QMenu" name="menu_edit">    <property name="title">     <string>编辑</string>    </property>   </widget>   <widget class="QMenu" name="menu_observe">    <property name="title">     <string>窗体</string>    </property>   </widget>   <widget class="QMenu" name="menu_view">    <property name="title">     <string>视图</string>    </property>   </widget>   <widget class="QMenu" name="menu_setting">    <property name="title">     <string>设置</string>    </property>    <addaction name="action_hook"/>    <addaction name="action_umbrella"/>    <addaction name="action_jump"/>    <addaction name="action_hammer"/>    <addaction name="action_up3days"/>    <addaction name="action_rise3in5"/>    <addaction name="action_riseform"/>    <addaction name="action_cheapform"/>    <addaction name="action_powerform"/>    <addaction name="action_weakform"/>   </widget>   <widget class="QMenu" name="menu_window">    <property name="title">     <string>窗口</string>    </property>   </widget>   <widget class="QMenu" name="menu_help">    <property name="title">     <string>帮助</string>    </property>   </widget>   <addaction name="menu_file"/>   <addaction name="menu_edit"/>   <addaction name="menu_observe"/>   <addaction name="menu_view"/>   <addaction name="menu_setting"/>   <addaction name="menu_window"/>   <addaction name="menu_help"/>  </widget>  <action name="action_start">   <property name="text">    <string>start</string>   </property>  </action>  <action name="action_next">   <property name="text">    <string>next</string>   </property>  </action>  <action name="action_hook">   <property name="text">    <string>hook</string>   </property>  </action>  <action name="action_umbrella">   <property name="text">    <string>umbrella</string>   </property>  </action>  <action name="action_jump">   <property name="text">    <string>jump</string>   </property>  </action>  <action name="action_hammer">   <property name="text">    <string>hammer</string>   </property>  </action>  <action name="action_up3days">   <property name="text">    <string>up3days</string>   </property>  </action>  <action name="action_rise3in5">   <property name="text">    <string>rise3in5</string>   </property>  </action>  <action name="action_riseform">   <property name="text">    <string>riseform</string>   </property>  </action>  <action name="action_cheapform">   <property name="text">    <string>cheapform</string>   </property>  </action>  <action name="action_powerform">   <property name="text">    <string>powerform</string>   </property>  </action>  <action name="action_weakform">   <property name="text">    <string>weakform</string>   </property>  </action> </widget> <resources/> <connections>  <connection>   <sender>action_start</sender>   <signal>triggered(bool)</signal>   <receiver>statusBar</receiver>   <slot>update()</slot>   <hints>    <hint type="sourcelabel">     <x>-1</x>     <y>-1</y>    </hint>    <hint type="destinationlabel">     <x>1249</x>     <y>1389</y>    </hint>   </hints>  </connection> </connections></ui>
