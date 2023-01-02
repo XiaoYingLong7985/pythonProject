@@ -768,10 +768,10 @@ class Ui_Form(object):
 
         self.retranslateUi(Form)
         self.label_2.linkHovered['QString'].connect(self.lineEdit.setText)
-        self.lineEdit.textChanged['QString'].connect(self.label_9.setText)
-        self.lineEdit.textChanged['QString'].connect(self.progressBar.update)
-        self.listWidget.currentRowChanged['int'].connect(self.progressBar_3.setValue)
-        self.listWidget.currentRowChanged['int'].connect(self.label_15.setNum)
+        # self.lineEdit.textChanged['QString'].connect(self.label_9.setText)
+        # self.lineEdit.textChanged['QString'].connect(self.progressBar.update)
+        # self.listWidget.currentRowChanged['int'].connect(self.progressBar_3.setValue)
+        # self.listWidget.currentRowChanged['int'].connect(self.label_15.setNum)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
